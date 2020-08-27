@@ -12,7 +12,12 @@
       </el-table-column>
       <el-table-column label="操作">
         <template slot-scope="{row,$index}">
-          <el-button type="warning" icon="el-icon-edit" size="small">修改</el-button>
+          <el-button
+            type="warning"
+            icon="el-icon-edit"
+            size="small"
+            @click="showUpdateDialog(row)"
+          >修改</el-button>
           <el-button type="danger" icon="el-icon-delete" size="small">删除</el-button>
         </template>
       </el-table-column>
@@ -31,7 +36,7 @@
     ></el-pagination>
 
     <!-- 嵌套表格的 dialog  图片上传用 upload-->
-    <el-dialog title="添加品牌" :visible.sync="dialogFormVisible">
+    <el-dialog :title="`${form.id?'修改':'添加'}品牌`" :visible.sync="dialogFormVisible">
       <el-form
         :model="form"
         style="width:80%;padding:0 20px"
@@ -44,7 +49,7 @@
         <el-form-item label="品牌Logo" :label-width="'100px'">
           <el-upload
             class="avatar-uploader"
-            action="https://jsonplaceholder.typicode.com/posts/"
+            action="/dev-api/admin/product/fileUpload"
             :show-file-list="false"
             :on-success="handleAvatarSuccess"
             :before-upload="beforeAvatarUpload"
@@ -57,7 +62,7 @@
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogFormVisible = false">确 定</el-button>
+        <el-button type="primary" @click="save">确 定</el-button>
       </div>
     </el-dialog>
   </div>
@@ -69,15 +74,19 @@ export default {
   data() {
     return {
       // 初始化默认值
+      // 列表页数据 4 个
       page: 4,
       limit: 3,
       total: 10,
       trademarkList: [],
-      dialogFormVisible: false, //是否弹出对话框
+
+      // 是否弹出对话框
+      dialogFormVisible: false,
+
       form: {
         // form表单需要收集的信息
         tmName: "",
-        logUrl: "",
+        logoUrl: "",
       },
     };
   },
@@ -96,7 +105,7 @@ export default {
       );
       if (result.code === 200) {
         this.trademarkList = result.data.records;
-        this.totla = result.data.total;
+        this.total = result.data.total;
       }
     },
     // 改变选择框的 多少条/页
@@ -109,15 +118,24 @@ export default {
     //   console.log(`当前页: ${val}`);
     // },
 
+    // 点击添加按钮弹出对话框
     showAddDialog() {
       this.dialogFormVisible = true;
+      // 为了解决添加后点击取消，再点击添加按钮，之前的数据仍然存在的bug
+      // 每次点击添加之前都清空之前的内容
+      this.form = {
+        tmName: "",
+        logoUrl: "",
+      };
     },
+
     // upload中的
     // 上传成功后的处理
     handleAvatarSuccess(res, file) {
-      this.form.logUrl = URL.createObjectURL(file.raw);
+      this.form.logoUrl = res.data;
     },
-    // 上传之前的处理
+
+    // 上传之前的处理 file是上传的文件
     beforeAvatarUpload(file) {
       const fileTypes = ["image/jpeg", "image/png"];
       const isJPGOrPNG = fileTypes.indexOf(file.type) !== -1;
@@ -130,6 +148,37 @@ export default {
         this.$message.error("上传头像图片大小不能超过 500kB!");
       }
       return isJPGOrPNG && isLt500k;
+    },
+
+    // dialog 中点击确定，上传图片
+    // ①获取请求所需的参数；②发请求；③成功干啥；④失败干啥
+    async save() {
+      // 获取请求参数
+      let trademark = this.form;
+
+      // 发请求
+      try {
+        const result = await this.$API.trademark.addOrUpdate(trademark);
+        // 发送请求成功
+        if (result.code === 200) {
+          this.dialogFormVisible = false; // 关闭对话框
+          this.getTrademarkList(trademark.id ? this.page : 1); // 重新发送请求
+          this.$message.success(`${trademark.id ? "修改" : "添加"}品牌成功`);
+        } else {
+          this.$message.error(`${trademark.id ? "修改" : "添加"}品牌失败`);
+        }
+      } catch (error) {
+        // 发送 ajax 请求失败
+        this.$message.error(error.$message);
+      }
+    },
+
+    // 点击修改按钮的逻辑
+    showUpdateDialog(row) {
+      // 显示对话框
+      this.dialogFormVisible = true;
+      // this.form = row;  修改bug
+      this.form = { ...row };
     },
   },
 };
