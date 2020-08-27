@@ -18,7 +18,12 @@
             size="small"
             @click="showUpdateDialog(row)"
           >修改</el-button>
-          <el-button type="danger" icon="el-icon-delete" size="small">删除</el-button>
+          <el-button
+            type="danger"
+            icon="el-icon-delete"
+            size="small"
+            @click="deleteTrademark(row)"
+          >删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -179,6 +184,52 @@ export default {
       this.dialogFormVisible = true;
       // this.form = row;  修改bug
       this.form = { ...row };
+    },
+
+    // 点击删除按钮的逻辑
+    // deleteTrademark(row) {},
+    // element-ui 确认消息
+    deleteTrademark(row) {
+      this.$confirm(`你确定删除${row.tmName}吗`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        // 点击确定按钮
+        .then(async () => {
+          try {
+            // 删除成功需要发送请求
+            const result = await this.$API.trademark.delete(row.id);
+            if (result.code === 200) {
+              // 成功提示
+              this.$message.success("删除品牌成功");
+              // 重新获取列表数据，
+              // 需要考虑特殊情况：当前删除为最后一页的最后一条,删除完毕后需要回到前一页
+              this.getTrademarkList(
+                this.trademarkList.length > 1 ? this.page : this.page - 1
+              );
+            } else {
+              // 失败
+              this.$message.error("删除品牌失败！");
+            }
+
+            // element-ui 中复杂写法:对象写法
+            // this.$message({
+            //   type: "success",
+            //   message: "删除成功!",
+            // });
+          } catch (error) {
+            // 发送请求失败：
+            this.$message.error("发送请求失败~");
+          }
+        })
+        // 点击取消按钮
+        .catch(() => {
+          this.$message({
+            type: "info",
+            message: "已取消删除",
+          });
+        });
     },
   },
 };
