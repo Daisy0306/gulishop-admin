@@ -47,11 +47,13 @@
         style="width:80%;padding:0 20px"
         label-position="left"
         label-width="100px"
+        :rules="rules"
+        ref="form"
       >
-        <el-form-item label="品牌名称" :label-width="'100px'">
+        <el-form-item label="品牌名称" :label-width="'100px'" prop="tmName">
           <el-input v-model="form.tmName" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="品牌Logo" :label-width="'100px'">
+        <el-form-item label="品牌Logo" :label-width="'100px'" prop="logoUrl">
           <el-upload
             class="avatar-uploader"
             action="/dev-api/admin/product/fileUpload"
@@ -92,6 +94,26 @@ export default {
         // form表单需要收集的信息
         tmName: "",
         logoUrl: "",
+      },
+      // 表单验证规则
+      rules: {
+        // 表单中有两个数据，需要对两个数据添加验证
+        tmName: [
+          // 每一个数据有多条验证规则，每一个验证规则是一个对象
+          // required：是否必须添加，trigger：添加时机，blur是失去焦点的时候进行验证
+          // trigger：验证时机，三个参数：①blur失去焦点；②change发生改变的时候；③点击确定按钮的时候整体进行验证
+          { required: true, message: "请输入品牌名称", trigger: "blur" },
+          // 判断字符的个数
+          {
+            min: 3,
+            max: 5,
+            message: "长度在 3 到 5 个字符",
+            trigger: "change",
+          },
+        ],
+        logoUrl: [
+          { required: true, message: "请选择上传图片", trigger: "change" },
+        ],
       },
     };
   },
@@ -157,25 +179,48 @@ export default {
 
     // dialog 中点击确定，上传图片
     // ①获取请求所需的参数；②发请求；③成功干啥；④失败干啥
-    async save() {
-      // 获取请求参数
-      let trademark = this.form;
-
-      // 发请求
-      try {
-        const result = await this.$API.trademark.addOrUpdate(trademark);
-        // 发送请求成功
-        if (result.code === 200) {
-          this.dialogFormVisible = false; // 关闭对话框
-          this.getTrademarkList(trademark.id ? this.page : 1); // 重新发送请求
-          this.$message.success(`${trademark.id ? "修改" : "添加"}品牌成功`);
+    save() {
+      // 添加表单的整体验证规则
+      // validate 函数可以判断所有的验证是否都成功
+      this.$refs.form.validate(async (valid) => {
+        // 如果验证全部成功，valid 的值就是为true
+        // 把之前写的成功相关的判断放在验证成功中
+        if (valid) {
+          // 获取请求参数
+          let trademark = this.form;
+          // 发请求
+          const result = await this.$API.trademark.addOrUpdate(trademark);
+          // 发送请求成功
+          if (result.code === 200) {
+            this.dialogFormVisible = false; // 关闭对话框
+            this.getTrademarkList(trademark.id ? this.page : 1); // 重新发送请求
+            this.$message.success(`${trademark.id ? "修改" : "添加"}品牌成功`);
+          } else {
+            this.$message.error(`${trademark.id ? "修改" : "添加"}品牌失败`);
+          }
         } else {
-          this.$message.error(`${trademark.id ? "修改" : "添加"}品牌失败`);
+          console.log("验证失败");
+          return false;
         }
-      } catch (error) {
-        // 发送 ajax 请求失败
-        this.$message.error(error.$message);
-      }
+      });
+
+      // // 获取请求参数
+      // let trademark = this.form;
+      // // 发请求
+      // try {
+      //   const result = await this.$API.trademark.addOrUpdate(trademark);
+      //   // 发送请求成功
+      //   if (result.code === 200) {
+      //     this.dialogFormVisible = false; // 关闭对话框
+      //     this.getTrademarkList(trademark.id ? this.page : 1); // 重新发送请求
+      //     this.$message.success(`${trademark.id ? "修改" : "添加"}品牌成功`);
+      //   } else {
+      //     this.$message.error(`${trademark.id ? "修改" : "添加"}品牌失败`);
+      //   }
+      // } catch (error) {
+      // 发送 ajax 请求失败
+      //this.$message.error(error.$message);
+      //}
     },
 
     // 点击修改按钮的逻辑
