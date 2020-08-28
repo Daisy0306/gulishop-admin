@@ -11,7 +11,7 @@
       </el-select>
     </el-form-item>
     <el-form-item label="三级分类">
-      <el-select v-model="form.category3Id" placeholder="请选择">
+      <el-select v-model="form.category3Id" placeholder="请选择" @change="handlerCategory3">
         <el-option :labe="c3.name" :value="c3.id" v-for="c3 in category3List" :key="c3.id"></el-option>
       </el-select>
     </el-form-item>
@@ -53,6 +53,8 @@ export default {
       this.form.category3Id = "";
       this.category2List = [];
       this.category3List = [];
+      // 通知父组件清空 attr 列表数据
+      this.$emit("changeCategory", { categoryId: category1Id, level: 1 });
 
       // 发请求拿数据，存数据
       const result = await this.$API.category.getCategorys2(category1Id);
@@ -61,16 +63,25 @@ export default {
       }
     },
 
-    // 选中2级分类列表，出发请求获取 3 级分类列表
+    // 选中2级分类列表，发出请求获取 3 级分类列表
     async handlerCategory2(category2Id) {
       // 选中2级 清空三级列表对应的id和列表数据
       this.form.category3Id = "";
       this.category3List = [];
+      // 通知父组件清空attr 列表数据
+      this.$emit("changeCategory", { categoryId: category2Id, level: 2 });
 
       const result = await this.$API.category.getCategorys3(category2Id);
       if (result.code === 200) {
         this.category3List = result.data;
       }
+    },
+
+    // 选中3级分类列表，触发请求获取对应的属性列表
+    handlerCategory3(category3Id) {
+      // 通知父组件请求attr列表数据
+      // level 代表当前请求的是几级分类列表数据
+      this.$emit("changeCategory", { categoryId: category3Id, level: 3 });
     },
   },
 };
