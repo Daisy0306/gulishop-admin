@@ -47,7 +47,7 @@
           type="primary"
           icon="el-icon-plus"
           :disabled="!form.attrName"
-          @click="addAttrValue"
+          @click="addAttrValue(originValue)"
         >添加属性值</el-button>
         <el-button @click="isShowList=true">取消</el-button>
 
@@ -55,7 +55,20 @@
           <el-table-column label="序号" width="80" align="center" type="index"></el-table-column>
           <el-table-column label="属性值名称" prop="valueName">
             <template slot-scope="{row,$index}">
-              <el-input v-model="row.valueName" placeholder="请输入属性值" size="mini"></el-input>
+              <el-input
+                v-if="row.isEdit"
+                v-model="row.valueName"
+                placeholder="请输入属性值"
+                size="mini"
+                @blur="toLook(row)"
+                @keyup.enter.native="toLook(row)"
+                :ref="$index"
+              ></el-input>
+              <span
+                v-else
+                @click="toEdit(row,$index)"
+                style="display:inline-block;height:100%;width:100%"
+              >{{row.valueName}}</span>
             </template>
           </el-table-column>
           <el-table-column label="操作"></el-table-column>
@@ -122,7 +135,7 @@ export default {
       }
     },
 
-    // 点击添加属性按钮，显示新的页面
+    // 添加属性值界面的显示
     showAddDiv() {
       this.isShowList = false;
       // 解决添加之后取消，完啦再添加数据依然存在的bug
@@ -136,16 +149,62 @@ export default {
 
     // 点击添加属性值逻辑（数据收集）
     addAttrValue() {
+      // 添加属性值
       this.form.attrValueList.push({
         attrId: this.form.id, // form当中有id就拿form 的id，没有就是undefined
         valueName: "",
+        isEdit: true,
       });
+      // 永远是最后的 那个 input 获取焦点
+      this.$nextTick(() => {
+        this.$refs[this.form.attrValueList.length - 1].focus();
+      });
+      // // 一开始保存原来输入框中存在的值
+      // this.originValue = this.valueName;
     },
 
     // 点击修改属性逻辑（数据收集）
     showUpdateDiv(row) {
       this.isShowList = false;
       this.form = cloneDeep(row);
+      this.form.attrValueList.forEach((item) => {
+        // item.isEdit = false; // 错的，这样不是响应式属性，因为数据劫持早都完了,属性值就写死了，要用 $set
+        this.$set(item, "isEdit", false);
+      });
+    },
+
+    // 属性值编辑模式变查看模式的切换
+    toLook(row) {
+      // 属性值必须是有意义的值
+      if (row.valueName.trim() === "") {
+        this.$message.warning("属性值不能为空");
+        // 添加无用属性值的时候，失去焦点或者按回车，就清空输入框中的内容
+        row.valueName = "";
+        return;
+      }
+
+      // 不能和已有的属性值重复
+      let repeat = this.form.attrValueList.some((item) => {
+        if (item != row) {
+          return item.valueName.trim() === row.valueName.trim();
+        }
+      });
+      if (repeat) {
+        this.$message.warning("属性值不能重复");
+        // 同时清空输入框中的内容
+        row.valueName = "";
+        return;
+      }
+      row.isEdit = false;
+    },
+
+    //查看模式变为编辑模式
+    toEdit(row, index) {
+      row.isEdit = true;
+      // 自动获取焦点
+      this.$nextTick(() => {
+        this.$refs[index].focus();
+      });
     },
   },
 };
