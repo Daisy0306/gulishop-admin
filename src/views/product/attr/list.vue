@@ -23,8 +23,14 @@
             </template>
           </el-table-column>
           <el-table-column label="操作" width="150">
-            <template>
-              <HintButton icon="el-icon-edit" type="warning" title="修改属性" size="mini"></HintButton>
+            <template slot-scope="{row,$index}">
+              <HintButton
+                icon="el-icon-edit"
+                type="warning"
+                title="修改属性"
+                size="mini"
+                @click="showUpdateDiv(row)"
+              ></HintButton>
               <HintButton icon="el-icon-delete" type="danger" title="删除属性" size="mini"></HintButton>
             </template>
           </el-table-column>
@@ -37,12 +43,21 @@
           </el-form-item>
         </el-form>
 
-        <el-button type="primary" icon="el-icon-plus" :disabled="!form.attrName">添加属性值</el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-plus"
+          :disabled="!form.attrName"
+          @click="addAttrValue"
+        >添加属性值</el-button>
         <el-button @click="isShowList=true">取消</el-button>
 
-        <el-table border style="margin:20px 0;">
-          <el-table-column label="序号" width="80" align="center"></el-table-column>
-          <el-table-column label="属性值名称"></el-table-column>
+        <el-table border style="margin:20px 0;" :data="form.attrValueList">
+          <el-table-column label="序号" width="80" align="center" type="index"></el-table-column>
+          <el-table-column label="属性值名称" prop="valueName">
+            <template slot-scope="{row,$index}">
+              <el-input v-model="row.valueName" placeholder="请输入属性值" size="mini"></el-input>
+            </template>
+          </el-table-column>
           <el-table-column label="操作"></el-table-column>
         </el-table>
 
@@ -54,6 +69,7 @@
 </template>
 
 <script>
+import cloneDeep from "lodash/cloneDeep";
 export default {
   name: "Attr",
   data() {
@@ -66,6 +82,8 @@ export default {
       form: {
         attrName: "",
         attrValueList: [],
+        categoryId: "",
+        categoryLevel: 3,
       },
     };
   },
@@ -107,6 +125,27 @@ export default {
     // 点击添加属性按钮，显示新的页面
     showAddDiv() {
       this.isShowList = false;
+      // 解决添加之后取消，完啦再添加数据依然存在的bug
+      this.form = {
+        attrName: "",
+        attrValueList: [],
+        categoryId: this.category3Id,
+        categoryLevel: 3,
+      };
+    },
+
+    // 点击添加属性值逻辑（数据收集）
+    addAttrValue() {
+      this.form.attrValueList.push({
+        attrId: this.form.id, // form当中有id就拿form 的id，没有就是undefined
+        valueName: "",
+      });
+    },
+
+    // 点击修改属性逻辑（数据收集）
+    showUpdateDiv(row) {
+      this.isShowList = false;
+      this.form = cloneDeep(row);
     },
   },
 };
