@@ -85,14 +85,7 @@
             </template>
           </el-table-column>
         </el-table>
-      </div>
-    </el-card>
-  </div>
-</template>
-          </el-table-column>
-        </el-table>
-
-        <el-button type="primary">保存</el-button>
+        <el-button type="primary" @click="save">保存</el-button>
         <el-button @click="isShowList=true">取消</el-button>
       </div>
     </el-card>
@@ -228,6 +221,31 @@ export default {
       this.$nextTick(() => {
         this.$refs[index].focus();
       });
+    },
+
+    // 保存修改/添加属性值
+    async save() {
+      // 1.获取参数数据
+      let attr = this.form;
+
+      // 2.对数据进行过滤/整理
+      if (attr.attrValueList.length === 0) {
+        this.$message.warning("属性当中必须有值");
+        return;
+      }
+      attr.attrValueList.forEach((item) => {
+        delete item.isEdit;
+      });
+
+      // 3.发请求
+      const result = await this.$API.attr.addOrUpdate(attr);
+      if (result.code === 200) {
+        this.$message.success("保存属性成功");
+        this.getAttrList();
+        this.isShowList = true;
+      } else {
+        this.$message.error("保存属性失败");
+      }
     },
   },
 };
