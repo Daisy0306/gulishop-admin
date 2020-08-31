@@ -47,7 +47,7 @@
           type="primary"
           icon="el-icon-plus"
           :disabled="!form.attrName"
-          @click="addAttrValue(originValue)"
+          @click="addAttrValue()"
         >添加属性值</el-button>
         <el-button @click="isShowList=true">取消</el-button>
 
@@ -159,8 +159,6 @@ export default {
       this.$nextTick(() => {
         this.$refs[this.form.attrValueList.length - 1].focus();
       });
-      // // 一开始保存原来输入框中存在的值
-      // this.originValue = this.valueName;
     },
 
     // 点击修改属性逻辑（数据收集）
@@ -179,7 +177,13 @@ export default {
       if (row.valueName.trim() === "") {
         this.$message.warning("属性值不能为空");
         // 添加无用属性值的时候，失去焦点或者按回车，就清空输入框中的内容
-        row.valueName = "";
+        //row.valueName = "";
+        if (this.form.id) {
+          row.valueName = this.originValue;
+          row.isEdit = false;
+        } else {
+          row.valueName = "";
+        }
         return;
       }
 
@@ -200,6 +204,7 @@ export default {
 
     //查看模式变为编辑模式
     toEdit(row, index) {
+      this.originValue = row.valueName;
       row.isEdit = true;
       // 自动获取焦点
       this.$nextTick(() => {
