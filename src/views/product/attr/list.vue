@@ -71,7 +71,25 @@
               >{{row.valueName}}</span>
             </template>
           </el-table-column>
-          <el-table-column label="操作"></el-table-column>
+          <el-table-column label="操作">
+            <template slot-scope="{row,$index}">
+              <el-popconfirm title="这是一段内容确定删除吗？" @onConfirm="form.attrValueList.splice($index,1)">
+                <HintButton
+                  slot="reference"
+                  icon="el-icon-delete"
+                  title="删除属性值"
+                  type="danger"
+                  size="mini"
+                ></HintButton>
+              </el-popconfirm>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+    </el-card>
+  </div>
+</template>
+          </el-table-column>
         </el-table>
 
         <el-button type="primary">保存</el-button>
