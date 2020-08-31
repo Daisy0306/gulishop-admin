@@ -94,7 +94,7 @@
             </template>
           </el-table-column>
         </el-table>
-        <el-button type="primary" @click="save">保存</el-button>
+        <el-button type="primary" @click="save" :disabled="form.attrValueList.length === 0">保存</el-button>
         <el-button @click="isShowList=true">取消</el-button>
       </div>
     </el-card>
@@ -238,13 +238,25 @@ export default {
       let attr = this.form;
 
       // 2.对数据进行过滤/整理
+      // if (attr.attrValueList.length === 0) {
+      //   this.$message.warning("属性当中必须有值");
+      //   return;
+      // }
+      // attr.attrValueList.forEach((item) => {
+      //   delete item.isEdit;
+      // });
+
+      // 处理保存属性按钮的可操作性中的bug：输入空串也可以保存
+      attr.attrValueList = attr.attrValueList.filter((item) => {
+        if (item.valueName !== "") {
+          delete item.isEdit;
+          return true;
+        }
+      });
       if (attr.attrValueList.length === 0) {
-        this.$message.warning("属性当中必须有值");
+        this.$message.warning("属性中必须有属性值");
         return;
       }
-      attr.attrValueList.forEach((item) => {
-        delete item.isEdit;
-      });
 
       // 3.发请求
       const result = await this.$API.attr.addOrUpdate(attr);
