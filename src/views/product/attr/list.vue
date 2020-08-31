@@ -31,7 +31,16 @@
                 size="mini"
                 @click="showUpdateDiv(row)"
               ></HintButton>
-              <HintButton icon="el-icon-delete" type="danger" title="删除属性" size="mini"></HintButton>
+
+              <el-popconfirm title="这是一段内容确定删除吗？" @onConfirm="deleteAttr(row)">
+                <HintButton
+                  icon="el-icon-delete"
+                  type="danger"
+                  title="删除属性"
+                  size="mini"
+                  slot="reference"
+                ></HintButton>
+              </el-popconfirm>
             </template>
           </el-table-column>
         </el-table>
@@ -245,6 +254,17 @@ export default {
         this.isShowList = true;
       } else {
         this.$message.error("保存属性失败");
+      }
+    },
+
+    // 删除属性的操作
+    async deleteAttr(row) {
+      const result = await this.$API.attr.delete(row.id);
+      if (result.code === 200) {
+        this.$message.success("删除属性成功");
+        this.getAttrList();
+      } else {
+        this.$message.error("删除属性失败");
       }
     },
   },
