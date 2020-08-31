@@ -134,6 +134,7 @@ export default {
         this.category2Id = categoryId;
         // 重新选择 2 级分类的时候，需要将父级中的 3 级id 和 attrList 清空
         this.category3Id = "";
+        this.attrList = [];
       } else {
         this.category3Id = categoryId;
         // 说明触发的是3级分类列表，发送请求获取属性列表数据
